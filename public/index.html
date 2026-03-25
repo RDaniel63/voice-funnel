@@ -206,13 +206,15 @@ function App() {
 
     // Stop recording
     const recorder = mediaRecorderRef.current;
-    recorder.stop();
-    recorder.stream.getTracks().forEach(t => t.stop());
     clearInterval(timerRef.current);
     setIsRecording(false);
 
-    // Wait for final chunks
+    // Request final data chunk and wait for stop event
+    recorder.stop();
     await new Promise(r => { recorder.onstop = r; });
+
+    // NOW it's safe to release the microphone
+    recorder.stream.getTracks().forEach(t => t.stop());
     const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType });
     if (blob.size < 1000) { notify('Recording too short', true); return; }
 
